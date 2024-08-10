@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Movie Recommendation System</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #f0f0f0;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #fff;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        h1 {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        form {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        input[type=text] {
+            width: 70%;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-size: 16px;
+            box-sizing: border-box;
+        }
+        input[type=submit] {
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        input[type=submit]:hover {
+            background-color: #45a049;
+        }
+        .movie-list {
+            margin-top: 20px;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            background-color: #f9f9f9;
+        }
+        .movie {
+            margin-bottom: 10px;
+            padding: 10px;
+            border: 1px solid #e0e0e0;
+            border-radius: 4px;
+            background-color: #ffffff;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+        .movie:hover {
+            background-color: #f0f0f0;
+        }
+        .recommendations {
+            margin-top: 20px;
+            padding: 20px;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            background-color: #f9f9f9;
+        }
+        .recommendation {
+            margin-bottom: 20px;
+            padding: 20px;
+            border: 1px solid #e0e0e0;
+            border-radius: 4px;
+            background-color: #ffffff;
+            box-shadow: 0 0 5px rgba(0, 0, 0, 0.1);
+        }
+        .recommendation-title {
+            font-size: 18px;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        .recommendation-details {
+            font-size: 16px;
+            margin-bottom: 10px;
+        }
+        .plot-synopsis {
+            font-size: 14px;
+            line-height: 1.6;
+        }
+    </style>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <script>
+        $(document).ready(function() {
+            // Autocomplete functionality
+            $('#query').keyup(function() {
+                var query = $(this).val();
+                $.getJSON('/search', {
+                    query: query
+                }, function(data) {
+                    var suggestions = '';
+                    $.each(data, function(index, value) {
+                        suggestions += '<div class="movie" data-title="' + value + '">' + value + '</div>';
+                    });
+                    $('.movie-list').html(suggestions);
+                });
+            });
+
+            // Handle movie selection and recommendations
+            $(document).on('click', '.movie', function() {
+                var selectedMovie = $(this).data('title');
+                $('#query').val(selectedMovie);
+                $('.movie-list').html(''); // Clear movie suggestions
+                fetchRecommendations(selectedMovie);
+            });
+
+            function fetchRecommendations(selectedMovie) {
+                $.getJSON('/recommendations', {
+                    selected_title: selectedMovie,
+                    min_rating: 0.0
+                }, function(data) {
+                    var recommendations = '';
+                    if (data.length === 0) {
+                        recommendations = '<p>No recommendations found.</p>';
+                    } else {
+                        $.each(data, function(index, movie) {
+                            recommendations += '<div class="recommendation">'
+                                + '<div class="recommendation-title">' + movie.Title + '</div>'
+                                + '<div class="recommendation-details">'
+                                + '<strong>Rating:</strong> ' + movie.Rating + '<br>'
+                                + '<strong>Director:</strong> ' + movie.Director + '<br>'
+                                + '<strong>User Votes:</strong> ' + movie.UserVotes + '<br>'
+                                + '<strong>Duration:</strong> ' + movie.Duration + '<br>'
+                                + '<strong>Release Year:</strong> ' + movie.ReleaseYear
+                                + '</div>'
+                                + '<div class="plot-synopsis">' + movie.PlotSynopsis + '</div>'
+                                + '</div>';
+                        });
+                    }
+                    $('.recommendations').html(recommendations);
+                }).fail(function(jqxhr, textStatus, error) {
+                    var err = textStatus + ", " + error;
+                    console.log("Request Failed: " + err); // Debugging: Check if request failed
+                });
+            }
+        });
+    </script>
+</head>
+<body>
+    <div class="container">
+        <h1>Movie Recommendation System</h1>
+        <form id="search-form">
+            <input type="text" id="query" name="query" placeholder="Enter movie title...">
+            <input type="submit" id="search-btn" value="Search">
+        </form>
+        <div class="movie-list"></div>
+        <div class="recommendations"></div>
+    </div>
+</body>
+</html>

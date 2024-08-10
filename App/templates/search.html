@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Movie Recommendation System</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+        h1 {
+            text-align: center;
+        }
+        form {
+            width: 50%;
+            margin: 0 auto;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        input[type=text] {
+            width: 70%;
+            padding: 10px;
+            margin-right: 10px;
+            box-sizing: border-box;
+        }
+        input[type=submit] {
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px;
+            border: none;
+            cursor: pointer;
+        }
+        input[type=submit]:hover {
+            background-color: #45a049;
+        }
+        #results {
+            margin-top: 20px;
+        }
+        .movie {
+            margin-bottom: 10px;
+            padding: 10px;
+            border: 1px solid #ccc;
+            cursor: pointer;
+        }
+        .movie:hover {
+            background-color: #f0f0f0;
+        }
+    </style>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <script>
+        $(document).ready(function() {
+            // Autocomplete functionality
+            $('#query').keyup(function() {
+                var query = $(this).val();
+                $.getJSON('/search', {
+                    query: query
+                }, function(data) {
+                    var suggestions = '';
+                    $.each(data, function(index, value) {
+                        suggestions += '<div class="movie" data-title="' + value + '">' + value + '</div>';
+                    });
+                    $('#results').html(suggestions);
+                });
+            });
+
+            // Handle movie selection and recommendations
+            $(document).on('click', '.movie', function() {
+                var selectedMovie = $(this).data('title');
+                $('#query').val(selectedMovie);
+                // Trigger search button click to send selected movie title
+                $('#search-btn').click();
+            });
+
+            // Handle search form submission
+            $('#search-form').submit(function(event) {
+                event.preventDefault(); // Prevent default form submission
+                var query = $('#query').val();
+                fetchRecommendations(query);
+            });
+
+            function fetchRecommendations(selectedMovie) {
+                $.getJSON('/recommendations', {
+                    selected_title: selectedMovie,
+                    min_rating: 0.0
+                }, function(data) {
+                    var recommendations = '';
+                    $.each(data, function(index, movie) {
+                        recommendations += '<div><strong>Title:</strong> ' + movie.title + ', <strong>Rating:</strong> ' + movie.rating + ', <strong>Genre:</strong> ' + movie.genre + '</div>';
+                    });
+                    $('#recommendations').html(recommendations);
+                });
+            }
+        });
+    </script>
+</head>
+<body>
+    <h1>Movie Recommendation System</h1>
+    <form id="search-form">
+        <input type="text" id="query" name="query" placeholder="Enter movie title...">
+        <input type="submit" id="search-btn" value="Search">
+    </form>
+    <div id="results"></div>
+    <h2>Recommendations</h2>
+    <div id="recommendations"></div>
+</body>
+</html>
